@@ -14,7 +14,7 @@ public class Review {
   
   static{
     try {
-      Scanner input = new Scanner(new File("cleanSentiment.csv"));
+      Scanner input = new Scanner(new File("CSA_216_ConsumerLab_Starter/ConsumerLab_Code/cleanSentiment.csv"));
       while(input.hasNextLine()){
         String[] temp = input.nextLine().split(",");
         sentiment.put(temp[0],Double.parseDouble(temp[1]));
@@ -29,21 +29,24 @@ public class Review {
   
   //read in the positive adjectives in postiveAdjectives.txt
      try {
-      Scanner input = new Scanner(new File("positiveAdjectives.txt"));
+      Scanner input = new Scanner(new File("CSA_216_ConsumerLab_Starter/ConsumerLab_Code/positiveAdjectives.txt"));
       while(input.hasNextLine()){
-        posAdjectives.add(input.nextLine().trim());
+        // The supplied list is a CSV export (word,value); random adjective
+        // methods should return just the word.
+        posAdjectives.add(input.nextLine().split(",")[0].trim());
       }
       input.close();
     }
     catch(Exception e){
-      System.out.println("Error reading or parsing postitiveAdjectives.txt\n" + e);
+      System.out.println("Error reading or parsing positiveAdjectives.txt\n" + e);
     }   
  
   //read in the negative adjectives in negativeAdjectives.txt
      try {
-      Scanner input = new Scanner(new File("negativeAdjectives.txt"));
+      Scanner input = new Scanner(new File("CSA_216_ConsumerLab_Starter/ConsumerLab_Code/negativeAdjectives.txt"));
+
       while(input.hasNextLine()){
-        negAdjectives.add(input.nextLine().trim());
+        negAdjectives.add(input.nextLine().split(",")[0].trim());
       }
       input.close();
     }
@@ -154,5 +157,84 @@ public class Review {
     } else {
       return randomNegativeAdj();
     }
+  }
+
+  /**
+   * Returns the sum of the sentiment values of the words in fileName.
+   */
+  public static double totalSentiment(String fileName)
+  {
+    String reviewText = textToString(fileName);
+    double sum = 0.0;
+
+    for (String word : reviewText.split("\\s+"))
+    {
+      sum += sentimentVal(removePunctuation(word));
+    }
+    
+    return sum;
+  }
+
+  /**
+   * Converts a review's total sentiment to a rating from 0 through 4.
+   */
+  public static int starRating(String fileName)
+  {
+    double total = totalSentiment(fileName);
+
+    if (total < -10) return 0;
+    if (total < 0) return 1;
+    if (total < 10) return 2;
+    if (total < 20) return 3;
+    return 4;
+  }
+
+  /**
+   * Replaces every *-marked adjective with an adjective that has stronger
+   * sentiment in the same direction, while retaining the original punctuation.
+   */
+  public static String fakeReview(String fileName)
+  {
+    String reviewText = textToString(fileName);
+    StringBuilder result = new StringBuilder();
+
+    for (String word : reviewText.split("\\s+"))
+    {
+      if (word.startsWith("*"))
+      {
+        String punctuation = getPunctuation(word);
+        String original = removePunctuation(word.substring(1));
+        result.append(strongerAdjective(original)).append(punctuation);
+      }
+      else
+      {
+        result.append(word);
+      }
+      result.append(" ");
+    }
+
+    return result.toString().trim();
+  }
+
+  /** Returns a random adjective that is stronger than original when possible. */
+  private static String strongerAdjective(String original)
+  {
+    double originalValue = sentimentVal(original);
+    boolean positive = originalValue > 0;
+    String replacement = positive ? randomPositiveAdj() : randomNegativeAdj();
+
+    // A finite limit prevents a rare endless search at an extreme value.
+    for (int attempts = 0; attempts < 1000; attempts++)
+    {
+      double replacementValue = sentimentVal(replacement);
+      if ((positive && replacementValue > originalValue) ||
+          (!positive && replacementValue < originalValue))
+      {
+        return replacement;
+      }
+      replacement = positive ? randomPositiveAdj() : randomNegativeAdj();
+    }
+
+    return replacement;
   }
 }
