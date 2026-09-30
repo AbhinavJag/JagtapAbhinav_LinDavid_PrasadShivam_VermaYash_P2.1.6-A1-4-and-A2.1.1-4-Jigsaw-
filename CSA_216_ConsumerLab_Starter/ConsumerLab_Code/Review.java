@@ -166,9 +166,9 @@ public class Review {
   {
     String reviewText = textToString(fileName);
     double sum = 0.0;
-
     for (String word : reviewText.split("\\s+"))
     {
+      System.out.println(word);
       sum += sentimentVal(removePunctuation(word));
     }
     
@@ -224,15 +224,16 @@ public class Review {
     String replacement = positive ? randomPositiveAdj() : randomNegativeAdj();
 
     // A finite limit prevents a rare endless search at an extreme value.
-    for (int attempts = 0; attempts < 1000; attempts++)
+    for (int attempts = 0; attempts < 1000000000; attempts++)
     {
       double replacementValue = sentimentVal(replacement);
       if ((positive && replacementValue > originalValue) ||
           (!positive && replacementValue < originalValue))
       {
+        System.out.println("replacement");
         return replacement;
       }
-      replacement = positive ? randomPositiveAdj() : randomNegativeAdj();
+      replacement = positive ? randomPositiveAdj() : randomNegativeAdj(); //If positive, return randompositive; else negative
     }
 
     return replacement;
